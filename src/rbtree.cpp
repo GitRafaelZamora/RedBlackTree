@@ -1,9 +1,11 @@
 #include <iostream>
 #include <cstdlib>
 #include <cassert>
+#include <string>
 
 
-#include "bst.h"
+#include "rbtree.h"
+#include "file.h"
 
 using namespace std;
 
@@ -13,8 +15,18 @@ BST::BST(int i) {
 	this->root = NULL;
 }
 
-void BST::printInOrder() {
-	printInOrderPrivate(this->root);
+string BST::RBWrite(tree_node* Pointer, string str) {
+	if (Pointer != NULL) {
+		str = to_string(Pointer->color) + ": " + to_string(Pointer->data) + "\n";
+		if (Pointer->left != NULL) {
+			str += RBWrite(Pointer->left, str);
+		}
+		// cout << Pointer->color << ": " << Pointer->data << endl;
+		if (Pointer->right != NULL) {
+			str += RBWrite(Pointer->right, str);
+		}
+	}
+    return str;
 }
 
 BST::tree_node* BST::createNode(int data, int color) {
@@ -24,18 +36,25 @@ BST::tree_node* BST::createNode(int data, int color) {
 	n->right = NULL;
 	n->parent = NULL;
 	n->color = color;
-	cout << "     data: " << n->data <<
-			"     color: " << n->color << endl;
 	return n;
+}
+
+BST::tree_node* BST::getRoot() {
+    return this->root;
 }
 
 //************ FAMILY FUNCTIONS ***************//
 BST::tree_node* BST::grandparent(tree_node* n) {
-    if (n != NULL && n->parent != NULL && n->parent->parent != NULL) {
-    	return n->parent->parent;
-    } else {
-    	return NULL;
-    }
+    // if (n != NULL && n->parent != NULL && n->parent->parent != NULL) {
+    // 	return n->parent->parent;
+    // } else {
+    // 	return NULL;
+    // }
+
+    assert (n != NULL);
+    assert (n->parent != NULL);
+    assert (n->parent->parent != NULL);
+    return n->parent->parent;
 }
 
 BST::tree_node* BST::sibling(tree_node* n) {
@@ -51,11 +70,15 @@ BST::tree_node* BST::sibling(tree_node* n) {
 }
 
 BST::tree_node* BST::uncle(tree_node* n) {
-    if (n != NULL && n->parent != NULL && n->parent->parent != NULL) {
-    	return sibling(n->parent);
-    } else {
-    	return NULL;
-    }
+    // if (n != NULL && n->parent != NULL && n->parent->parent != NULL) {
+    // 	return sibling(n->parent);
+    // } else {
+    // 	return NULL;
+    // }
+    assert (n != NULL);
+    assert (n->parent != NULL);
+    assert (n->parent->parent != NULL);
+    return sibling(n->parent);
 }
 //************ END FAMILY FUNCTIONS ***************//
 
@@ -68,7 +91,7 @@ void BST::verify_properties() {
     verify_property_1 (this->root);
     verify_property_2 (this->root);
     verify_property_4 (this->root);
-    verify_property_5( this->root);
+    verify_property_5 (this->root);
 }
 
 void BST::verify_property_1(tree_node* n)
@@ -87,9 +110,9 @@ void BST::verify_property_2(tree_node* n) {
 void BST::verify_property_4(tree_node* n) {
     if (node_color(n) == 0)
     {
-        if (node_color(n->left) == 1 && node_color(n->right) == 1 && node_color(n->parent) == 1) {
-        	return;
-        }
+        assert(node_color(n->left) == 1);
+        assert(node_color(n->right) == 1);
+        assert(node_color(n->parent) == 1);
     }
     if (n == NULL)
         return;
@@ -123,7 +146,6 @@ void BST::verify_property_5_helper(tree_node* n, int black_height, int* path_cou
 //************ ROTATION FUNCTIONS ***************//
 void BST::rotate_left(tree_node* n)
 {
-	cout << "Rotating left: " << n->data << endl;
     tree_node* r = n->right;
     replace_node(n, r);
     n->right = r->left;
@@ -137,7 +159,6 @@ void BST::rotate_left(tree_node* n)
 
 void BST::rotate_right(tree_node* n)
 {
-	cout << "Rotating right: " << n->data << endl;
     tree_node* L = n->left;
     replace_node(n, L);
     n->left = L->right;
@@ -166,13 +187,12 @@ void BST::replace_node(tree_node* oldn, tree_node* newn)
 //************************************ END ROTATION FUNCTIONS ************************************************//
 
 //************ INSERT CASE FUNCTIONS ***************//
-void BST::insert(tree_node* newNode) {
+void BST::RBInsert(tree_node* newNode) {
 	insertPrivate(newNode, this->root);
 }
 
 void BST::insertPrivate(tree_node* newNode, tree_node* Pointer) {
 	if (this->root == NULL) {
-		// cout << "NEW ROOT" << endl;
 		this->root = newNode;
 		// this->root->color = 1;
 		// this->root->parent = NULL;
@@ -197,13 +217,16 @@ void BST::insertPrivate(tree_node* newNode, tree_node* Pointer) {
 		}
 		
 	}
-	// insert_case_1(newNode);
-	// verify_properties();
+
+	if (node_color(newNode->parent) == 0 && newNode->color == 0) {
+		insert_case_1(newNode);
+		verify_properties();
+	}
+	
 }
 
 void BST::insert_case_1(tree_node* n) {
     if (n->parent == NULL) {
-		cout << "New ROOT " << n->data << ": " << n->color << " to " << 1 << endl;
         n->color = 1;
     } else {
     	insert_case_2(n);
@@ -219,15 +242,7 @@ void BST::insert_case_2(tree_node* n) {
 }
 
 void BST::insert_case_3(tree_node* n) {
-	// if (grandparent(n) == NULL) {
-	// 	return;
-	// } else 
 	if (node_color(uncle(n)) == 0) {
-
-		// cout << "RECOLOR " << n->parent->data << ": " << n->parent->color << " to " << 1 << endl;
-		// cout << "RECOLOR " << grandparent(n)->data << ": " << grandparent(n)->color << " to " << 1 << endl;
-		// cout << "RECOLOR " << uncle(n)->data << ": " << uncle(n)->color << " to " << 0 << endl;
-
         n->parent->color = 1;
         uncle(n)->color = 1;
         grandparent(n)->color = 0;
@@ -254,7 +269,8 @@ void BST::insert_case_5(tree_node* n) {
     grandparent(n)->color = 0;
     if (n == n->parent->left && n->parent == grandparent(n)->left) {
         rotate_right(grandparent(n));
-    } else if (n == n->parent->right && n->parent == grandparent(n)->right) {
+    } else {
+        assert (n == n->parent->right && n->parent == grandparent(n)->right);
         rotate_left(grandparent(n));
     }
 }
@@ -278,18 +294,4 @@ BST::tree_node* BST::returnNodePrivate(int data, tree_node* Pointer) {
 
 BST::tree_node* BST::returnNode(int data) {
 	return returnNodePrivate(data, root);
-}
-
-void BST::printInOrderPrivate(tree_node* Pointer) {
-	if (this->root != NULL) {
-		if (Pointer->left !=NULL) {
-			printInOrderPrivate(Pointer->left);
-		}
-		cout << Pointer->color << ": " << Pointer->data << endl;
-		if (Pointer->right != NULL) {
-			printInOrderPrivate(Pointer->right);
-		}
-	} else {
-		cout << " The tree is empty.\n";
-	}
 }

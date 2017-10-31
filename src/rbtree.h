@@ -1,3 +1,7 @@
+#include "file.h"
+
+using namespace std;
+
 class BST {
 public:
 	struct tree_node {
@@ -8,19 +12,18 @@ public:
 		tree_node* parent;
 	};
 private:
-	
-
 	tree_node* root;
 
 	void insertPrivate(tree_node* newNode, tree_node* Pointer);
-	void printInOrderPrivate(tree_node* Pointer);
 	tree_node* returnNodePrivate(int data, tree_node* Pointer);
 
 
 public: 
 	BST(int i);
-	void printInOrder();
+	string RBWrite(tree_node* Pointer, string str);
+	void printNodeData(tree_node* node);
 	tree_node* createNode(int data, int color);
+	tree_node* getRoot();
 
 	//**** FAMILY FUNCTIONS ****//
 	tree_node* sibling(tree_node* n);
@@ -41,7 +44,7 @@ public:
 	//**** END PROPERTIES FUNCTIONS ****//
 
 	//**** INSERT CASE FUNCTIONS ****//
-	void insert(tree_node* newNode);
+	void RBInsert(tree_node* newNode);
 	void insert_case_1(tree_node* n);
 	void insert_case_2(tree_node* n);
 	void insert_case_3(tree_node* n);
